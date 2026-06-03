@@ -1,43 +1,37 @@
-import { useCallback, useState } from "react";
+import { useState } from "react";
 
-interface Credentials {
-  Email: string;
-  Password: string;
-}
 const Login = () => {
   const [userName, setUserName] = useState<string>("");
-  const [password, setPassword] = useState("");
+  const [password, setPassword] = useState<string>("");
+  const [error, setError] = useState<string>("");
 
-  const HandleUserName = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      setUserName(e.target.value);
-    },
-    [],
-  );
+  type FormSubmitHandler = NonNullable<
+    React.ComponentProps<"form">["onSubmit"]
+  >;
 
-  const HandlePassword = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      setPassword(e.target.value);
-    },
-    [],
-  );
-
-  const HandleOnSubmit = useCallback(async (body: Credentials) => {
-    const result = await fetch("https://localhost:7093/api/auth/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(body),
-    });
-
-    if (!result.ok) {
-      throw new Error("Error");
+  const handleSubmit: FormSubmitHandler = async (e) => {
+    e.preventDefault();
+    setError('');
+    try {
+      const result = await fetch("https://localhost:7093/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ Email: userName, Password: password }),
+      });
+      const response = await result.json();
+      if (!result.ok) {
+        setError(response.message?? "Login failed");
+      } else {
+        console.log(response);
+        return response;
+      }
+    } catch (err) {
+      console.error(err);
+      setError("Unable to connect to server");
     }
-    const response = await result.json();
-    await console.log(response);
-    return response;
-  }, []);
+  };
 
   return (
     <>
@@ -61,17 +55,23 @@ const Login = () => {
           </h2>
         </div>
 
-        <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
+        <form
+          className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm"
+          onSubmit={handleSubmit}
+        >
           <div className="space-y-6">
             <div>
-              <label htmlFor="email" className="block text-sm/6 font-medium text-gray-900">
+              <label
+                htmlFor="email"
+                className="block text-sm/6 font-medium text-gray-900"
+              >
                 Email address
               </label>
               <div className="mt-2">
                 <input
                   id="email"
                   value={userName}
-                  onChange={HandleUserName}
+                  onChange={(e) => setUserName(e.target.value)}
                   name="email"
                   type="email"
                   required
@@ -83,11 +83,17 @@ const Login = () => {
 
             <div>
               <div className="flex items-center justify-between">
-                <label htmlFor="password" className="block text-sm/6 font-medium text-gray-900">
+                <label
+                  htmlFor="password"
+                  className="block text-sm/6 font-medium text-gray-900"
+                >
                   Password
                 </label>
                 <div className="text-sm">
-                  <a href="#" className="font-semibold text-indigo-600 hover:text-indigo-500">
+                  <a
+                    href="#"
+                    className="font-semibold text-indigo-600 hover:text-indigo-500"
+                  >
                     Forgot password?
                   </a>
                 </div>
@@ -96,7 +102,7 @@ const Login = () => {
                 <input
                   id="password"
                   value={password}
-                  onChange={HandlePassword}
+                  onChange={(e) => setPassword(e.target.value)}
                   name="password"
                   type="password"
                   required
@@ -110,7 +116,6 @@ const Login = () => {
               <button
                 type="submit"
                 className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm/6 font-semibold text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                onClick={() => HandleOnSubmit({Email : userName, Password :password})}
               >
                 Sign in
               </button>
@@ -123,10 +128,13 @@ const Login = () => {
               Start a 14 day free trial
             </a>
           </p> */}
-        </div>
+        </form>
+        {error && (
+          <p className="mt-10 text-center text-sm/6 text-red-500">{error}</p>
+        )}
       </div>
     </>
-  )
+  );
 };
 
 export default Login;
