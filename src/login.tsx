@@ -1,10 +1,11 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const Login = () => {
   const [userName, setUserName] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [error, setError] = useState<string>("");
-
+  const navigate = useNavigate();
   type FormSubmitHandler = NonNullable<
     React.ComponentProps<"form">["onSubmit"]
   >;
@@ -25,7 +26,7 @@ const Login = () => {
         setError(response.message?? "Login failed");
       } else {
         console.log(response);
-        return response;
+        navigate("/home");
       }
     } catch (err) {
       console.error(err);
